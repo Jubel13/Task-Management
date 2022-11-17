@@ -5,6 +5,7 @@ import { GetTasksFilterDto } from './dto/get-tasks-dto';
 import { TaskRepository } from './task.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
+import { User } from 'src/auth/user.entity';
 
 @Injectable()
 export class TasksService {
@@ -18,12 +19,12 @@ export class TasksService {
   //   return this.tasks;
   // }
 
-  getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
-    return this.taskRepository.getTasks(filterDto);
+  getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
+    return this.taskRepository.getTasks(filterDto, user);
   }
 
-  async getTaskById(id: string): Promise<Task> {
-    const found = await this.taskRepository.findOne(id);
+  async getTaskById(id: string, user: User): Promise<Task> {
+    const found = await this.taskRepository.findOne({ where: { id, user } });
 
     if (!found) {
       throw new NotFoundException(`Task with id/${id} not found`);
@@ -32,11 +33,11 @@ export class TasksService {
     return found;
   }
 
-  createTask(createTaskDto: CreateTaskDto): Promise<Task> {
-    return this.taskRepository.createTask(createTaskDto);
+  createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
+    return this.taskRepository.createTask(createTaskDto, user);
   }
 
-  async deleteTask(id: string): Promise<void> {
+  async deleteTask(id: string, user: User): Promise<void> {
     // const found = await this.taskRepository.findOne(id);
 
     // if (!found) {
@@ -45,7 +46,7 @@ export class TasksService {
 
     // await this.taskRepository.remove(found);
 
-    const result = await this.taskRepository.delete(id);
+    const result = await this.taskRepository.delete({ id, user });
     console.log(result);
 
     if (result.affected === 0) {
@@ -53,8 +54,8 @@ export class TasksService {
     }
   }
 
-  async updateTask(id: string, status: TaskStatus): Promise<Task> {
-    const foundTask = await this.getTaskById(id);
+  async updateTask(id: string, status: TaskStatus, user: User): Promise<Task> {
+    const foundTask = await this.getTaskById(id, user);
 
     foundTask.status = status;
 
